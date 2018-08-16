@@ -35,8 +35,6 @@ COPY ./opendss/liblinenoise.so /usr/local/lib
 RUN chmod +x /usr/local/bin/opendsscmd && \
   ldconfig
 
-# Add mysql configuration 
-RUN echo "[client]\nuser=gridappsd\npassword=gridappsd1234\ndatabase=gridappsd\nhost=mysql" > /root/.my.cnf
 
 # This is the location that is built using the ./gradlew export command from
 # the command line.  When building this image we must make sure to have run that
@@ -55,9 +53,14 @@ WORKDIR /gridappsd
 
 RUN echo $TIMESTAMP > /gridappsd/dockerbuildversion.txt
 
-RUN useradd -m gridappsd
-RUN mkdir /etc/sudoers.d  \
-        && echo "gridappsd    ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/gridappsd
+# Add gridappsd user , sudoers, mysql configuration, log directory
+RUN useradd -m gridappsd \
+    && if [ -d /etc/sudoers.d ] ; then echo "gridappsd    ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/gridappsd ; fi \
+    && echo "[client]\nuser=gridappsd\npassword=gridappsd1234\ndatabase=gridappsd\nhost=mysql" > /home/gridappsd/.my.cnf \
+    && chown gridappsd:gridappsd /home/gridappsd/.my.cnf \
+    && mkdir /gridappsd/log \
+    && chown gridappsd:gridappsd /gridappsd/log
+
 USER gridappsd
 
 ENTRYPOINT ["/gridappsd/entrypoint.sh"]
