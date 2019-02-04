@@ -6,7 +6,7 @@ usage () {
   exit 2
 }
 
-TAG="$TRAVIS_BRANCH"
+TAG="${TRAVIS_BRANCH##*/}"
 
 ORG=`echo $DOCKER_PROJECT | tr '[:upper:]' '[:lower:]'`
 ORG="${ORG:+${ORG}/}"
