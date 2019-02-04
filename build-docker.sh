@@ -1,3 +1,6 @@
+echo "pull the latest gridappsd_base container"
+docker pull gridappsd/gridappsd_base:master
+
 ./gradlew clean
 rm -rf gov.pnnl.goss/gridappsd/generated
 ./gradlew export
