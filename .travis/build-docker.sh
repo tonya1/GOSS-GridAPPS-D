@@ -66,4 +66,4 @@ if [ -n "$DOCKER_USERNAME" -a -n "$DOCKER_PASSWORD" ]; then
       exit 1
     fi
   fi
-
+fi
