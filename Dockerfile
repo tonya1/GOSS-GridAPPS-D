@@ -1,5 +1,5 @@
 ARG GRIDAPPSD_BASE_VERSION=:master
-FROM gridappsd/gridappsd_base${GRIDAPPSD_BASE_VERSION}
+FROM tonyamartin/gridappsd_base:cp14
 
 ARG TIMESTAMP
 
