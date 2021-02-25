@@ -99,7 +99,7 @@ RUN useradd -m gridappsd \
     && echo "[client]\nuser=gridappsd\npassword=gridappsd1234\ndatabase=gridappsd\nhost=mysql" > /home/gridappsd/.my.cnf \
     && chown gridappsd:gridappsd /home/gridappsd/.my.cnf \
     && chown -R gridappsd:gridappsd /gridappsd/services/gridappsd-ochre \
-    && /miniconda/bin/conda init bashrc \
+    && /miniconda/bin/conda init bash \
     && mkdir /gridappsd/log \
     && chown gridappsd:gridappsd /gridappsd/log
 
