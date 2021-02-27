@@ -8,6 +8,19 @@ IMAGE="${ORG}gridappsd"
 TIMESTAMP=`date +'%y%m%d%H'`
 GITHASH=`git log -1 --pretty=format:"%h"`
 
+if [ -n "$DOCKER_USERNAME" -a -n "$DOCKER_PASSWORD" ]; then
+
+  echo " "
+  echo "Connecting to docker"
+
+  echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+  status=$?
+  if [ $status -ne 0 ]; then
+    echo "Error: status $status"
+    exit 1
+  fi
+fi
+
 BUILD_VERSION="${TIMESTAMP}_${GITHASH}${TRAVIS_BRANCH:+:$TRAVIS_BRANCH}"
 echo "BUILD_VERSION $BUILD_VERSION"
 
