@@ -104,7 +104,5 @@ RUN useradd -m gridappsd \
 
 USER gridappsd
 
-RUN /miniconda/bin/conda init bash 
-
 ENTRYPOINT ["/gridappsd/entrypoint.sh"]
 CMD ["gridappsd"]
