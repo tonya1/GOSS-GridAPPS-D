@@ -1,5 +1,18 @@
 #!/bin/bash
 
+if [ -n "$DOCKER_USERNAME" -a -n "$DOCKER_PASSWORD" ]; then
+
+  echo " "
+  echo "Connecting to docker"
+
+  echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+  status=$?
+  if [ $status -ne 0 ]; then
+    echo "Error: status $status"
+    exit 1
+  fi
+fi
+
 TAG="${TRAVIS_BRANCH//\//_}"
 
 ORG=`echo $DOCKER_PROJECT | tr '[:upper:]' '[:lower:]'`
