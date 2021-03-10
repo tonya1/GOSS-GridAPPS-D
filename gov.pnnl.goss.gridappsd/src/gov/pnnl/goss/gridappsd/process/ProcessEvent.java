@@ -56,6 +56,7 @@ import gov.pnnl.goss.gridappsd.dto.events.Fault;
 import gov.pnnl.goss.gridappsd.dto.events.ScheduledCommandEvent;
 import gov.pnnl.goss.gridappsd.dto.RuntimeTypeAdapterFactory;
 import gov.pnnl.goss.gridappsd.dto.UserToken;
+import gov.pnnl.goss.gridappsd.dto.ServiceInfo;
 import gov.pnnl.goss.gridappsd.dto.PlatformStatus;
 import gov.pnnl.goss.gridappsd.dto.RequestPlatformStatus;
 import gov.pnnl.goss.gridappsd.dto.RequestSimulation;
@@ -252,10 +253,20 @@ public class ProcessEvent implements GossResponseEvent {
 				} else {
 					request = message;
 				}
+				
+				
 
 				Response r = dataManager.processDataRequest(request, type, processId, configurationManager.getConfigurationProperty(GridAppsDConstants.GRIDAPPSD_TEMP_PATH), username);
 				//client.publish(event.getReplyDestination(), r);
-				sendData(client, event.getReplyDestination(), ((DataResponse)r).getData(), processId, username);
+				String responseFormat = null;
+				JsonObject jsonObject = new JsonParser().parse(request.toString()).getAsJsonObject();
+				if(jsonObject.has("resultFormat"))
+					responseFormat = jsonObject.get("resultFormat").getAsString();
+				if(jsonObject.has("responseFormat"))
+					responseFormat = jsonObject.get("responseFormat").getAsString();
+				
+				
+				sendData(client, event.getReplyDestination(), ((DataResponse)r).getData(), processId, username, responseFormat);
 
 
 			} else if(event.getDestination().contains(GridAppsDConstants.topic_requestConfig)){
@@ -281,6 +292,16 @@ public class ProcessEvent implements GossResponseEvent {
 				if(configRequest!=null){
 					StringWriter sw = new StringWriter();
 					PrintWriter out = new PrintWriter(sw);
+					
+					
+					ServiceInfo gldService = serviceManager.getService("GridLAB-D");
+					if(gldService!=null){
+						List<String> deps = gldService.getService_dependencies();
+						String gldInterface = GridAppsDConstants.getGLDInterface(deps);
+						configRequest.getParameters().put(GridAppsDConstants.GRIDLABD_INTERFACE, gldInterface);
+					} 
+
+					
 					try {
 						configurationManager.generateConfiguration(configRequest.getConfigurationType(), configRequest.getParameters(), out, new Integer(processId).toString(), username);
 					} catch (Exception e) {
@@ -296,10 +317,10 @@ public class ProcessEvent implements GossResponseEvent {
 					  	configRequest.getConfigurationType().equals("Vnom Export")){
 						Gson gson = new Gson();
 						YBusExportResponse response = gson.fromJson(result, YBusExportResponse.class);
-						sendData(client, event.getReplyDestination(), response, processId, username);
+						sendData(client, event.getReplyDestination(), response, processId, username, null);
 					}
 					else
-						sendData(client, event.getReplyDestination(), result, processId, username);
+						sendData(client, event.getReplyDestination(), result, processId, username, null);
 
 				} else {
 					logManager.error(ProcessStatus.ERROR, processId, "No valid configuration request received, request: "+request);
@@ -326,7 +347,7 @@ public class ProcessEvent implements GossResponseEvent {
 				//TODO get from user token
 				RoleList roleListResult = new RoleList();
 				roleListResult.setRoles(roles);
-				sendData(client, event.getReplyDestination(), roleListResult.toString(), processId, username);
+				sendData(client, event.getReplyDestination(), roleListResult.toString(), processId, username, null);
 			}
 		}catch(Exception e ){
 			StringWriter sw = new StringWriter();
@@ -338,17 +359,21 @@ public class ProcessEvent implements GossResponseEvent {
 	}
 
 
-	private void sendData(Client client, Destination replyDestination, Serializable data, String processId, String username){
+	private void sendData(Client client, Destination replyDestination, Serializable data, String processId, String username, String responseFormat){
 		try {
 			//Make sure it is sending back something in the data field for valid json  (or if it is null maybe it should send error response instead???)
 			 if(data==null || data.toString().length()==0){
                  data = "{}";
              }
-			String r = "{\"data\":"+data+",\"responseComplete\":true,\"id\":\""+processId+"\"}";
-			/*DataResponse r = new DataResponse();
-			r.setData(data);
-			r.setResponseComplete(true);*/
-			client.publish(replyDestination, r);
+			
+			if(responseFormat == null || responseFormat.equals("JSON")) {
+				String r = "{\"data\":"+data+",\"responseComplete\":true,\"id\":\""+processId+"\"}";
+				client.publish(replyDestination, r);
+			}
+			else{
+				String r = data.toString();
+				client.publish(replyDestination, r);
+			}	
 		} catch (Exception e) {
 			e.printStackTrace();
 			StringWriter sw = new StringWriter();
